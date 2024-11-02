@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Ping Pong Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+        canvas {
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="draw" height="550" width="800"></canvas>
+    <audio id="hitSound" src="hit.mp3"></audio>
+    <script>
+        var canvas;
+        var canvasContext;
+        var ballX = 50;
+        var ballY = 50;
+        var ballSpeedX = 3;
+        var ballSpeedY = 3;
+
+        var paddle1Y = 250;
+        var paddle2Y = 250;
+        const PADDLE_HEIGHT = 150;
+        const PADDLE_WIDTH = 20;
+        var player1Score = 0;
+        var player2Score = 0;
+        var isAudioEnabled = false;
+
+        window.onload = function() {
+            canvas = document.getElementById("draw");
+            canvasContext = canvas.getContext('2d');
+
+            // Start the game on user interaction
+            canvas.addEventListener('click', function() {
+                if (!isAudioEnabled) {
+                    document.getElementById("hitSound").play().catch(() => {}); // Try to enable audio
+                    isAudioEnabled = true;
+                }
+            });
+
+            setInterval(drawEverything, 10);
+
+            canvas.addEventListener('mousemove', function(evt) {
+                var mousePos = calculateMousePos(evt);
+                paddle1Y = mousePos.y - PADDLE_HEIGHT / 2;
+            });
+        }
+
+        function calculateMousePos(evt) {
+            var rect = canvas.getBoundingClientRect();
+            var root = document.documentElement;
+            var mouseX = evt.clientX - rect.left - root.scrollLeft;
+            var mouseY = evt.clientY - rect.top - root.scrollTop;
+            return {
+                x: mouseX,
+                y: mouseY
+            };
+        }
+
+        function resetGame() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX = -ballSpeedX;  
+        }
+
+        function drawNet() {
+            for (var i = 0; i < canvas.height; i += 40) {
+                canvasContext.fillStyle = 'white';
+                canvasContext.fillRect(canvas.width / 2 - 1, i, 2, 20);
+            }
+        }
+
+        function drawEverything() {
+            // Clear the canvas
+            canvasContext.fillStyle = "black";
+            canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Net
+            drawNet();
+
+            // Draw Left Paddle
+            canvasContext.fillStyle = "white";
+            canvasContext.fillRect(20, paddle1Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+
+            // Draw Right Paddle (AI)
+            canvasContext.fillStyle = "white";
+            canvasContext.fillRect(canvas.width - 40, paddle2Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+            
+            // Draw the ball
+            canvasContext.fillStyle = "white";
+            canvasContext.beginPath();
+            canvasContext.arc(ballX, ballY, 10, 0, Math.PI * 2, true);
+            canvasContext.fill();
+
+            // Move the ball
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Right Paddle AI Movement
+            if (paddle2Y + PADDLE_HEIGHT / 2 < ballY - 35) {
+                paddle2Y += 6;
+            } else if (paddle2Y + PADDLE_HEIGHT / 2 > ballY + 35) {
+                paddle2Y -= 6;
+            }
+            
+            const hitSound = document.getElementById("hitSound");
+            // Bounce the ball off the paddles
+            if (ballX - 10 < 40 && ballY > paddle1Y && ballY < paddle1Y + PADDLE_HEIGHT) {
+                ballSpeedX = -ballSpeedX;
+                if (isAudioEnabled) hitSound.play();
+            } else if (ballX + 10 > canvas.width - 40 && ballY > paddle2Y && ballY < paddle2Y + PADDLE_HEIGHT) {
+                ballSpeedX = -ballSpeedX;
+                if (isAudioEnabled) hitSound.play();
+            }
+
+            // Bounce the ball off the top and bottom
+            if (ballY + 10 > canvas.height || ballY - 10 < 0) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // Reset the game if the ball goes out of bounds
+            if (ballX + 10 > canvas.width) {
+                player1Score++;
+                resetGame();
+            } else if (ballX - 10 < 0) {
+                player2Score++;
+                resetGame();
+            }
+
+            // Display Scores
+            canvasContext.fillStyle = 'white';
+            canvasContext.fillText("Player Score: " + player1Score, 100, 100);
+            canvasContext.fillText("AI Score: " + player2Score, canvas.width - 200, 100);
+        }
+    </script>
+</body>
+</html>
