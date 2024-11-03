@@ -20,6 +20,7 @@
 <body>
     <canvas id="draw" height="550" width="800"></canvas>
     <audio id="hitSound" src="hit.mp3"></audio>
+    <audio id="strikeSound" src="strike.mp3"></audio>
     <script>
         var canvas;
         var canvasContext;
@@ -41,9 +42,9 @@
             canvasContext = canvas.getContext('2d');
 
             // Start the game on user interaction
-            canvas.addEventListener('click', function() {
+            canvas.addEventListener('onload', function() {
                 if (!isAudioEnabled) {
-                    document.getElementById("hitSound").play().catch(() => {}); // Try to enable audio
+                    document.getElementById("hitSound").play().catch(() => {});
                     isAudioEnabled = true;
                 }
             });
@@ -92,10 +93,18 @@
             canvasContext.fillStyle = "white";
             canvasContext.fillRect(20, paddle1Y, PADDLE_WIDTH, PADDLE_HEIGHT);
 
+            // Draw Red Line Behind Left Paddle
+            canvasContext.fillStyle = "red";
+            canvasContext.fillRect(0, 0, 10, canvas.height);
+
             // Draw Right Paddle (AI)
             canvasContext.fillStyle = "white";
             canvasContext.fillRect(canvas.width - 40, paddle2Y, PADDLE_WIDTH, PADDLE_HEIGHT);
-            
+
+            // Draw Red Line Behind Right Paddle
+            canvasContext.fillStyle = "red";
+            canvasContext.fillRect(canvas.width - 10, 0, 10, canvas.height);
+
             // Draw the ball
             canvasContext.fillStyle = "white";
             canvasContext.beginPath();
@@ -113,14 +122,17 @@
                 paddle2Y -= 6;
             }
             
+            //Sound Effect
             const hitSound = document.getElementById("hitSound");
+            const strikeSound = document.getElementById("strikeSound");
+            
             // Bounce the ball off the paddles
             if (ballX - 10 < 40 && ballY > paddle1Y && ballY < paddle1Y + PADDLE_HEIGHT) {
                 ballSpeedX = -ballSpeedX;
-                if (isAudioEnabled) hitSound.play();
+                strikeSound.play();
             } else if (ballX + 10 > canvas.width - 40 && ballY > paddle2Y && ballY < paddle2Y + PADDLE_HEIGHT) {
                 ballSpeedX = -ballSpeedX;
-                if (isAudioEnabled) hitSound.play();
+                strikeSound.play();
             }
 
             // Bounce the ball off the top and bottom
@@ -132,9 +144,11 @@
             if (ballX + 10 > canvas.width) {
                 player1Score++;
                 resetGame();
+                hitSound.play();
             } else if (ballX - 10 < 0) {
                 player2Score++;
                 resetGame();
+                hitSound.play();
             }
 
             // Display Scores
